@@ -115,7 +115,9 @@ public class UserKernel extends ThreadedKernel {
 		super.terminate();
 	}
 
-
+	public static int getVirtualPageNumber(int vaddr) {
+        return Machine.processor().pageFromAddress(vaddr);
+    }
 
 	public static int newPage(){
 		int i = -1;

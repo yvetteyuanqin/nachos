@@ -5,6 +5,7 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
+import java.lang.reflect.Array;
 import java.util.*;
 /**
  * Encapsulates the state of a user process that is not contained in its user
@@ -85,16 +86,15 @@ public class UserProcess {
      *  do not overlap in their memory usage.  allocate a fixed number of pages for the process's stack;
      */
 	public boolean allocatePhysicalMemory(int vpn, int needPages, boolean readOnly){
-		LinkedList<TranslationEntry> allocatePages = new LinkedList<TranslationEntry>()
+		LinkedList<TranslationEntry> allocatePages = new LinkedList<TranslationEntry>();
 		
 		for(int i = 0; i < needPages; i++){
 			int ppn = UserKernel.newPage();
 			if(ppn == -1) {
 				Lib.debug(dbgProcess,"\nError in allocating a new page.\n");
 				
-				for(int j = 0; j < allocatePages.size();j++){
-						TranslationEntry target = allocatePagesp[j];
-						pageTable[target] = new TranslationEntry(target.vpn,0 , false, false,false, false);
+				for (TranslationEntry target: allocatePages) {
+						pageTable[target.vpn] = new TranslationEntry(target.vpn,0 , false, false,false, false);
 						UserKernel.deletePage(target.ppn);
 						numPages--;
 					
@@ -118,7 +118,7 @@ public class UserProcess {
 	 
 	//***************
 	public void releaseResource(){
-		for(int i = 0l i < pageTable.size(); i++){
+		for(int i = 0; i < pageTable.length; i++){
 			if(pageTable[i].valid){
 				UserKernel.deletePage(pageTable[i].ppn);
 				pageTable[i] = new TranslationEntry(pageTable[i].vpn,0 , false, false,false, false);
@@ -174,7 +174,7 @@ public class UserProcess {
 
 	public TranslationEntry lookUpPageTable(int vpn){
 		if(pageTable ==null) return null;
-		if(vpn >= 0; && vpn < pageTable.length)
+		if(vpn >= 0 && vpn < pageTable.length)
 			return pageTable[vpn];
 		else
 			return null;
@@ -207,7 +207,7 @@ public class UserProcess {
 
         byte[] memory = Machine.processor().getMemory();
         int vpnum = Machine.processor().pageFromAddress(vaddr);
-        int offset = Machine.processor().offsetFromAddress(vaddr);
+        int addoffset = Machine.processor().offsetFromAddress(vaddr);
 
         // for now, just assume that virtual addresses equal physical addresses
         if (vaddr < 0 || vaddr >= memory.length)
@@ -220,10 +220,10 @@ public class UserProcess {
         if(entry.valid == false) return -1;
         entry.used = true;
         if (entry.ppn < 0 || entry.ppn >= Machine.processor().getNumPhysPages()) return 0;
-        int paddr = entry.ppn * pageSize + offset;
+        int paddr = entry.ppn * pageSize + addoffset;
 
         int amount = Math.min(length, memory.length - vaddr);
-        System.arraycopy(memory, vaddr, data, offset, amount);
+        System.arraycopy(memory, vaddr, data, addoffset, amount);
 
         return amount;
     }
@@ -264,7 +264,7 @@ public class UserProcess {
         if (vaddr < 0 || vaddr >= memory.length)
             return 0;
         int vpnum = Machine.processor().pageFromAddress(vaddr);
-        int offset = Machine.processor().offsetFromAddress(vaddr);
+        int addoffset = Machine.processor().offsetFromAddress(vaddr);
         if (vpnum >= numPages) return -1;
         TranslationEntry entry = pageTable[vpnum];
         if (entry == null) return 0;
@@ -273,10 +273,10 @@ public class UserProcess {
         entry.dirty = true;
         if(entry.ppn <0 || entry.ppn >=Machine.processor().getNumPhysPages()) return 0;
 
-        int paddr = entry.ppn * pageSize + offset;
+        int paddr = entry.ppn * pageSize + addoffset;
 
         int amount = Math.min(length, memory.length - vaddr);
-        System.arraycopy(data, offset, memory, vaddr, amount);
+        System.arraycopy(data, addoffset, memory, vaddr, amount);
 
         return amount;
     }
@@ -478,7 +478,7 @@ public class UserProcess {
 	private int handleExit(int status){
 		if(parentProcess!=null){
 				parentProcess.statusLock.acquire();
-				parentProcess.childrenExitStatus.put(pID, status);
+				parentProcess.childrenExitStatus.put(PID, status);
 				parentProcess.statusLock.release();
 		}
 		
@@ -490,7 +490,7 @@ public class UserProcess {
 			child.parentProcess=null;
 			}
 
-		if(pID==0){
+		if(PID==0){
 			Kernel.kernel.terminate();
 		}else{
 			UThread.finish();
@@ -541,7 +541,7 @@ public class UserProcess {
 		
 		child.parentProcess =this;
 		this.childrenProcess.add(child);
-		int id=child.pID;
+		int id=child.PID;
 		return id;
 	}
 
@@ -551,7 +551,7 @@ public class UserProcess {
 		}
 		UserProcess child=null;
 		for(int i = 0; i < childrenProcess.size(); i++){
-			if(childrenProcess.get(i).pID==pID){
+			if(childrenProcess.get(i).PID==pID){
 				child=childrenProcess.get(i);
 				break;
 			}
@@ -566,7 +566,7 @@ public class UserProcess {
 		child.parentProcess=null;
 		childrenProcess.remove(child);
 		statusLock.acquire();
-		Integer status=childrenExitStatus.get(child.pID);
+		Integer status=childrenExitStatus.get(child.PID);
 		statusLock.release();
 		if(status == null){
 			Lib.debug(dbgProcess, "Error:Cannot find the exit status of the child");
@@ -575,7 +575,7 @@ public class UserProcess {
 			//status int 32bits
 			byte[] buffer=new byte[4];
 			buffer=Lib.bytesFromInt(status);
-			int count=writeVirtualMemory(statusVAddr,buffer);
+			int count=writeVirtualMemory(vAddr,buffer);
 			if(count == 4){
 				return 1;
 			}else{
@@ -1013,12 +1013,11 @@ public class UserProcess {
     protected int PID;//process number to identify root process used in halt()
     protected Lock cntLock = new Lock();//counter lock
     protected OpenFile[] descriptors;
-	protected Coff coff;
-	protected TranslationEntry[] pageTable;
-	
+
 	
 	protected UserProcess parentProcess;
 	protected LinkedList<UserProcess> childrenProcess; 
 	protected Lock statusLock;
-
+	protected UThread thread;
+	protected HashMap<Integer,Integer> childrenExitStatus;
 }
