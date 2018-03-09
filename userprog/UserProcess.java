@@ -587,7 +587,7 @@ public class UserProcess {
 
     private int handleRead(int fDescriptor, int buffer, int count)
     {
-        if(fDescriptor<0||fDescriptor>15) {
+        if(fDescriptor<0||fDescriptor>15||descriptors[fDescriptor]==null) {
             Lib.debug(dbgProcess, "handleRead:Descriptor out of range");
             return -1;
         }
@@ -595,17 +595,17 @@ public class UserProcess {
             Lib.debug(dbgProcess, "handleRead:Size to read cannot be negative");
             return -1;
         }
-        OpenFile file;//or OpenFile file
-        if(descriptors[fDescriptor] != null) {
-            file = descriptors[fDescriptor];
-        }else {
-            Lib.debug(dbgProcess, "handleRead:File doesn't exist in the descriptor table");
-            return -1;
-        }
+        OpenFile file=descriptors[fDescriptor];;//or OpenFile file
+//        if(descriptors[fDescriptor] != null) {
+//            file = descriptors[fDescriptor];
+//        }else {
+//            Lib.debug(dbgProcess, "handleRead:File doesn't exist in the descriptor table");
+//            return -1;
+//        }
         int length = 0;
         byte[] readIn = new byte[count];
         length = file.read(readIn,0,count);
-        if(length==-1){
+        if(length<=0){
             Lib.debug(dbgProcess, "handleRead:Error occurred when try to read file");
             return -1;
         }
@@ -634,7 +634,7 @@ public class UserProcess {
      */
     private int handleWrite (int fDescriptor, int buffer, int count)
     {
-        if(fDescriptor<0||fDescriptor>15) {
+        if(fDescriptor<0||fDescriptor>15||descriptors[fDescriptor]==null) {
             Lib.debug(dbgProcess, "handleWrite:Descriptor out of range");
             return -1;
         }
@@ -642,17 +642,17 @@ public class UserProcess {
             Lib.debug(dbgProcess, "handleWRite:Size to read cannot be negative");
             return -1;
         }
-        OpenFile file;//or OpenFile file
-        if(descriptors[fDescriptor] != null) {
-            file = descriptors[fDescriptor];
-        }else {
-            Lib.debug(dbgProcess, "handleWrite:File doesn't exist in the descriptor table");
-            return -1;
-        }
+        OpenFile file = descriptors[fDescriptor];;//or OpenFile file
+//        if(descriptors[fDescriptor] != null) {
+//            file = descriptors[fDescriptor];
+//        }else {
+//            Lib.debug(dbgProcess, "handleWrite:File doesn't exist in the descriptor table");
+//            return -1;
+//        }
         int length = 0;
         byte[] writeIn = new byte[count];
         length = readVirtualMemory(buffer,writeIn,0,count);
-        if(length==-1){
+        if(length<=0){
             Lib.debug(dbgProcess, "handleWrite:Error occurred when try to read file");
             return -1;
         }
@@ -715,22 +715,22 @@ public class UserProcess {
         Lib.debug(dbgProcess, "filename: "+fileName);
         if(fileName == null) {
             Lib.debug(dbgProcess, "handleUnlink:Read filename failed ");
-            return -1;
+            return 0;
         }
-        OpenFile file;
-        int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
-        //OpenFile file;
-        for(int i=0;i<16;i++){
-        		file = descriptors[i];
-            if(descriptors[i]!=null&&descriptors[i].getName().compareTo(fileName)==0){
-                openfileNum=i;
-                break;
-            }
-        }
-        if(openfileNum != -1) {
-
-            return -1;//should close files first
-        }
+ //       OpenFile file;
+//        int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
+//        //OpenFile file;
+//        for(int i=0;i<16;i++){
+//        		file = descriptors[i];
+//            if(descriptors[i]!=null&&descriptors[i].getName().compareTo(fileName)==0){
+//                openfileNum=i;
+//                break;
+//            }
+//        }
+//        if(openfileNum != -1) {
+//
+//            return -1;//should close files first
+//        }
         boolean isRemoved = ThreadedKernel.fileSystem.remove(fileName);
         if(!isRemoved)
         {
@@ -743,6 +743,14 @@ public class UserProcess {
 
 	private int handleExit(int status){
 		coff.close();
+		for(int i=0;i<16;i++) {
+			if(descriptors[i]!=null) {
+				descriptors[i].close();
+				descriptors[i]=null;
+			}
+		}
+//		this.status =status;
+//		normalExit = true;
 		if(parentProcess!=null){
 				parentProcess.statusLock.acquire();
 				parentProcess.childrenExitStatus.put(PID, status);
