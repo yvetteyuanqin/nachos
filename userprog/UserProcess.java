@@ -224,10 +224,10 @@ public class UserProcess {
         do{
           int pageNum = Processor.pageFromAddress(vaddr+transferred);
           if (pageNum < 0 || pageNum >= pageTable.length) return 0;
-          int offset = Processor.offsetFromAddress(vaddr+transferred);
-          int left = pageSize-offset;
+          int poffset = Processor.offsetFromAddress(vaddr+transferred);
+          int left = pageSize-poffset;
           int amount = Math.min(left, length-transferred);
-          int paddr = pageTable[pageNum].ppn*pageSize+offset;
+          int paddr = pageTable[pageNum].ppn*pageSize+poffset;
           System.arraycopy(memory, paddr, data, offset+transferred, amount);
           transferred += amount;
         }while(transferred<length);
@@ -278,10 +278,10 @@ public class UserProcess {
         do{
         int pageNum = Processor.pageFromAddress(vaddr+transferred);
         if (pageNum < 0 || pageNum >= pageTable.length) return 0;
-        int offset = Processor.offsetFromAddress(vaddr+transferred);
-        int left = pageSize-offset;
+        int poffset = Processor.offsetFromAddress(vaddr+transferred);
+        int left = pageSize-poffset;
         int amount = Math.min(left, length-transferred);
-        int paddr = pageTable[pageNum].ppn*pageSize+offset;
+        int paddr = pageTable[pageNum].ppn*pageSize+poffset;
         System.arraycopy(data,offset+transferred,memory,paddr,amount);
         transferred += amount;
       }while(transferred<length);
