@@ -757,7 +757,7 @@ public class UserProcess {
 		}
 		
 		unloadSections();
-		
+
 		int childrenNum = childrenProcess.size();
 		for(int i=0; i< childrenNum;i++){
 			UserProcess child = childrenProcess.removeFirst();
@@ -767,7 +767,7 @@ public class UserProcess {
 		if(PID==0){
 			Kernel.kernel.terminate();
 		}else{
-			UThread.finish();
+			KThread.finish();//UThread.finish();
 		}
 		return 0;
 		
