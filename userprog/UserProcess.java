@@ -422,7 +422,7 @@ public class UserProcess {
                 entry.readOnly = section.isReadOnly();
                 int ppn = entry.ppn;
                 // for now, just assume virtual addresses=physical addresses
-                section.loadPage(i, vpn);
+                section.loadPage(i, ppn);
             }
         }
 
