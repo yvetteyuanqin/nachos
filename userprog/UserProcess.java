@@ -742,6 +742,7 @@ public class UserProcess {
 
 
 	private int handleExit(int status){
+		coff.close();
 		if(parentProcess!=null){
 				parentProcess.statusLock.acquire();
 				parentProcess.childrenExitStatus.put(PID, status);
