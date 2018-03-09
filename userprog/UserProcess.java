@@ -30,10 +30,19 @@ public class UserProcess {
         for (int i = 0; i < numPhysPages; i++)
             pageTable[i] = new TranslationEntry(i, i, true, false, false, false);
         //increment PID to identify root process
+        boolean inStatus=Machine.interrupt().disable();
+        descriptors=new OpenFile[16];
         cntLock    = new Lock();
         cntLock.acquire();
         PID = counter++;
         cntLock.release();
+        descriptors[0]=UserKernel.console.openForReading();
+        descriptors[1]=UserKernel.console.openForWriting();
+        Machine.interrupt().restore(inStatus);
+        parentProcess=null;
+		childrenProcess=new LinkedList<UserProcess>();
+		childrenExitStatus=new HashMap<Integer,Integer>();
+		statusLock=new Lock();
         //openfile
     }
 
@@ -598,11 +607,11 @@ public class UserProcess {
         if(length==-1){
             Lib.debug(dbgProcess, "handleRead:Error occurred when try to read file");
             return -1;
-        }else {
-            int number = writeVirtualMemory(buffer,readIn);
-            //file.position = file.position+number;
-            return number;
         }
+        int number = writeVirtualMemory(buffer,readIn);
+        //file.position = file.position+number;
+        return number;
+        
 
     }
     /**
@@ -645,11 +654,11 @@ public class UserProcess {
         if(length==-1){
             Lib.debug(dbgProcess, "handleWrite:Error occurred when try to read file");
             return -1;
-        }else {
+        }
             int number = writeVirtualMemory(buffer,writeIn);
             //file.position = file.position+number;
             return number;
-        }
+        
     }
     /**
      * Close a file descriptor, so that it no longer refers to any file or stream
@@ -707,9 +716,11 @@ public class UserProcess {
             Lib.debug(dbgProcess, "handleUnlink:Read filename failed ");
             return -1;
         }
+        OpenFile file;
         int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
         //OpenFile file;
         for(int i=0;i<16;i++){
+        		file = descriptors[i];
             if(descriptors[i]!=null&&descriptors[i].getName().compareTo(fileName)==0){
                 openfileNum=i;
                 break;
