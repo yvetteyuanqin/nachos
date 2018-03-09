@@ -508,6 +508,7 @@ public class UserProcess {
             Lib.debug(dbgProcess, "handleCreate:Read filename failed ");
             return -1;
         }
+        //find a free openfile
         int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
         for(int i=0;i<16;i++){
             if(descriptors[i]==null){
