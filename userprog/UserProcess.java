@@ -213,28 +213,26 @@ public class UserProcess {
     public int readVirtualMemory(int vaddr, byte[] data, int offset, int length) {
         Lib.assertTrue(offset >= 0 && length >= 0
                        && offset + length <= data.length);
-
-        byte[] memory = Machine.processor().getMemory();
-        int vpnum = Machine.processor().pageFromAddress(vaddr);
-        int addoffset = Machine.processor().offsetFromAddress(vaddr);
-
-        // for now, just assume that virtual addresses equal physical addresses
-        if (vaddr < 0 || vaddr >= memory.length)
-            return 0;
-
-        if(vpnum >= numPages) return -1;
-
-        TranslationEntry entry = pageTable[vpnum];
-        if(entry == null) return 0;
-        if(entry.valid == false) return -1;
-        entry.used = true;
-        if (entry.ppn < 0 || entry.ppn >= Machine.processor().getNumPhysPages()) return 0;
-        int paddr = entry.ppn * pageSize + addoffset;
-
-        int amount = Math.min(length, memory.length - vaddr);
-        System.arraycopy(memory, paddr, data, addoffset, amount);
-
-        return amount;
+	    byte[] memory = Machine.processor().getMemory();
+        if (length > (pageSize*numPages-vaddr)){
+          length = pageSize*numPages-vaddr;
+        }
+        if (data.length-offset<length){
+          length = data.length-offset;
+        }
+        int transferred = 0;
+        do{
+          int pageNum = Processor.pageFromAddress(vaddr+transferred);
+          if (pageNum < 0 || pageNum >= pageTable.length) return 0;
+          int offset = Processor.offsetFromAddress(vaddr+transferred);
+          int left = pageSize-offset;
+          int amount = Math.min(left, length-transferred);
+          int paddr = pageTable[pageNum].ppn*pageSize+offset;
+          System.arraycopy(memory, paddr, data, offset+transferred, amount);
+          transferred += amount;
+        }while(transferred<length);
+        return transferred;
+        
     }
 
     /**
@@ -268,26 +266,27 @@ public class UserProcess {
                        && offset + length <= data.length);
 
         byte[] memory = Machine.processor().getMemory();
+	  
 
-        // for now, just assume that virtual addresses equal physical addresses
-        if (vaddr < 0 || vaddr >= memory.length)
-            return 0;
-        int vpnum = Machine.processor().pageFromAddress(vaddr);
-        int addoffset = Machine.processor().offsetFromAddress(vaddr);
-        if (vpnum >= numPages) return -1;
-        TranslationEntry entry = pageTable[vpnum];
-        if (entry == null) return 0;
-        if (entry.valid == false || entry.readOnly) return -1;
-        entry.used =true;
-        entry.dirty = true;
-        if(entry.ppn <0 || entry.ppn >=Machine.processor().getNumPhysPages()) return 0;
+        if (length > (pageSize*numPages-vaddr)){
+          length = pageSize*numPages-vaddr;
+        }
+        if (data.length-offset<length){
+          length = data.length-offset;
+        }
+        int transferred = 0;
+        do{
+        int pageNum = Processor.pageFromAddress(vaddr+transferred);
+        if (pageNum < 0 || pageNum >= pageTable.length) return 0;
+        int offset = Processor.offsetFromAddress(vaddr+transferred);
+        int left = pageSize-offset;
+        int amount = Math.min(left, length-transferred);
+        int paddr = pageTable[pageNum].ppn*pageSize+offset;
+        System.arraycopy(data,offset+transferred,memory,paddr,amount);
+        transferred += amount;
+      }while(transferred<length);
+      return transferred;
 
-        int paddr = entry.ppn * pageSize + addoffset;
-
-        int amount = Math.min(length, memory.length - vaddr);
-        System.arraycopy(data, addoffset, memory, paddr, amount);
-
-        return amount;
     }
 
     /**
