@@ -232,7 +232,7 @@ public class UserProcess {
         int paddr = entry.ppn * pageSize + addoffset;
 
         int amount = Math.min(length, memory.length - vaddr);
-        System.arraycopy(memory, vaddr, data, addoffset, amount);
+        System.arraycopy(memory, paddr, data, addoffset, amount);
 
         return amount;
     }
