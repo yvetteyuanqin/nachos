@@ -25,8 +25,8 @@ public class UserKernel extends ThreadedKernel {
 
 		console = new SynchConsole(Machine.console());
 
-  	freePagesLock = new Lock();
-
+		processIDSem = new Semaphore(1);
+		freePagesSem = new Semaphore(1);
 	  for (int i = 0; i < Machine.processor().getNumPhysPages(); i++) {
 	    freePages.add(i);
 	  }
@@ -121,8 +121,8 @@ public class UserKernel extends ThreadedKernel {
 	// dummy variables to make javac smarter
 	private static Coff dummy1 = null;
 
-  public static Lock freePagesLock;
-  public static Lock processIDLock;
+	public static Semaphore processIDSem;
+    public static Semaphore freePagesSem;
   public static LinkedList<Integer> freePages = new LinkedList<Integer>();
   
   public static int newProcessID = 0;

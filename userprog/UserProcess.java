@@ -30,10 +30,10 @@ public class UserProcess {
 	public UserProcess() {
 		int numPhysPages = Machine.processor().getNumPhysPages();
 		
-		cntLock.acquire();
+		UserKernel.processIDSem.P();//cntLock.acquire();
 		PID = UserKernel.newProcessID;
 		UserKernel.newProcessID++;
-		cntLock.release();
+		UserKernel.processIDSem.V();//cntLock.release();
 		
 		pageTable = new TranslationEntry[numPhysPages];
 		for (int i = 0; i < numPhysPages; i++)
