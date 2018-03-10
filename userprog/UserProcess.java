@@ -448,7 +448,184 @@ public class UserProcess {
 			Lib.assertNotReached("Unexpected exception");
 		}
 	}
+/**/
+	 private int handleCreate(int a0)
 
+	    {
+	        if(a0<0) {
+	            Lib.debug(dbgProcess, "handleOpen:Invalid virtual address");
+	            return -1;
+	        }
+	        String fileName = readVirtualMemoryString(a0,256);
+	        OpenFile file = Machine.stubFileSystem().open(fileName, true);
+	        Lib.debug(dbgProcess, "filename: "+fileName);
+	        if(fileName == null) {
+	            Lib.debug(dbgProcess, "handleCreate:Read filename failed ");
+	            return -1;
+	        }else {
+		        	for (int i = 2; i < descriptors.length; i++) {
+		        		if (descriptors[i] == null) {
+		        			descriptors[i] = file;
+		        		    return i;
+		        		}
+	        	    }
+	        }
+	        //find a free openfile
+//	        int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
+//	        for(int i=0;i<16;i++){
+//	            if(descriptors[i]==null){
+//	                openfileNum=i;
+//	                break;
+//	            }
+//	        }
+//	        if(openfileNum != null) {
+//	            OpenFile file = ThreadedKernel.fileSystem.open(fileName, true);
+//	            if(file !=null) {
+//	                descriptors[openfileNum] = file;
+//	                return openfileNum;
+//	            }else
+//	                return -1;
+//	        }else
+//	            return -1;
+
+	    }
+	 
+	 private int handleOpen(int a0)
+	    {
+	        if(a0<0) {
+	            Lib.debug(dbgProcess, "handleOpen:Invalid virtual address");
+	            return -1;
+	        }
+	        String fileName = readVirtualMemoryString(a0,256);
+	        Lib.debug(dbgProcess, "filename: "+fileName);
+	        OpenFile file = Machine.stubFileSystem().open(fileName, false);
+	        if(fileName == null) {
+	            Lib.debug(dbgProcess, "handleCreate:Read filename failed ");
+	            return -1;
+	        }else {
+	        	for (int i = 2; i < descriptors.length; i++) {
+		        		if (descriptors[i] == null) {
+		        		    descriptors[i] = file;
+		        		    return i;
+		        		}
+	        	    }
+	        }
+//	        int openfileNum = -1;//implementation should support up to 16 concurrently open files per process
+//	        for(int i=0;i<16;i++){
+//	            if(descriptors[i]==null){
+//	                openfileNum=i;
+//	                break;
+//	            }
+//	        }
+//	        if(openfileNum != -1) {
+//	            OpenFile file = ThreadedKernel.fileSystem.open(fileName, false);
+//	            if(file !=null) {
+//	                descriptors[openfileNum] = file;
+//	                return openfileNum;
+//	            }else //fileopen failed
+//	                return -1;
+//	        }else
+//	            return -1;
+	    }
+	 private int handleRead(int fDescriptor, int buffer, int count)
+	    {
+	        if(fDescriptor<0||fDescriptor>15||descriptors[fDescriptor]==null) {
+	            Lib.debug(dbgProcess, "handleRead:Descriptor out of range");
+	            return -1;
+	        }
+	        if(count<0){
+	            Lib.debug(dbgProcess, "handleRead:Size to read cannot be negative");
+	            return -1;
+	        }
+	        OpenFile file=descriptors[fDescriptor];;//or OpenFile file
+	        if (file == null) return -1;
+//	        if(descriptors[fDescriptor] != null) {
+//	            file = descriptors[fDescriptor];
+//	        }else {
+//	            Lib.debug(dbgProcess, "handleRead:File doesn't exist in the descriptor table");
+//	            return -1;
+//	        }
+	        int number = 0;
+	        byte[] readIn = new byte[count];
+	        number = file.read(readIn,0,count);
+	        if(number<=0){
+	            Lib.debug(dbgProcess, "handleRead:Error occurred when try to read file");
+	            return -1;
+	        }
+	        writeVirtualMemory(buffer,readIn);
+	        //file.position = file.position+number;
+	        return number;
+	        
+
+	    }
+	 private int handleWrite (int fDescriptor, int buffer, int count)
+	    {
+	        if(fDescriptor<0||fDescriptor>15||descriptors[fDescriptor]==null) {
+	            Lib.debug(dbgProcess, "handleWrite:Descriptor out of range");
+	            return -1;
+	        }
+	        if(count<0){
+	            Lib.debug(dbgProcess, "handleWRite:Size to read cannot be negative");
+	            return -1;
+	        }
+	        OpenFile file = descriptors[fDescriptor];;//or OpenFile file
+	        if (file == null) return -1;
+//	        if(descriptors[fDescriptor] != null) {
+//	            file = descriptors[fDescriptor];
+//	        }else {
+//	            Lib.debug(dbgProcess, "handleWrite:File doesn't exist in the descriptor table");
+//	            return -1;
+//	        }
+	        int length = 0;
+	        byte[] writeIn = new byte[count];
+	        length = readVirtualMemory(buffer,writeIn);
+	        if(length<=0){
+	            Lib.debug(dbgProcess, "handleWrite:Error occurred when try to read file");
+	            return -1;
+	        }
+	            int number = file.write(writeIn,0,count);
+	            //file.position = file.position+number;
+	            return number;
+	        
+	    }
+	 
+	 
+	 private int handleClose(int fDescriptor) {
+	        if(fDescriptor<0||fDescriptor>15) {
+	            Lib.debug(dbgProcess, "handleClose:Descriptor out of range");
+	            return -1;
+	        }
+
+	        if(descriptors[fDescriptor] != null) {
+	            descriptors[fDescriptor].close();
+	            descriptors[fDescriptor] = null;
+	            return fDescriptor;
+	        }else {
+	            Lib.debug(dbgProcess, "handleClose:File doesn't exist in the descriptor table");
+	            return -1;
+	        }
+	        
+	  }
+	 private int handleUnlink(int a0) {
+	        if(a0<0) {
+	            Lib.debug(dbgProcess, "handleUnlink:Invalid virtual address");
+	            return -1;
+	        }
+	        String fileName = readVirtualMemoryString(a0,256);
+	        Lib.debug(dbgProcess, "filename: "+fileName);
+	        if(fileName == null) {
+	            Lib.debug(dbgProcess, "handleUnlink:Read filename failed ");
+	            return 0;
+	        }
+	        boolean isRemoved = ThreadedKernel.fileSystem.remove(fileName);
+	        if(!isRemoved)
+	        {
+	            Lib.debug(dbgProcess, "handleUnlink:Remove failed");
+	            return -1;
+	        }
+	        return 0;
+	 }
+	 
 	/** The program being run by this process. */
 	protected Coff coff;
 
@@ -468,4 +645,20 @@ public class UserProcess {
 	private static final int pageSize = Processor.pageSize;
 
 	private static final char dbgProcess = 'a';
+	
+	/*self-defined and used*/
+    protected static int counter = 0;
+    protected int PID;//process number to identify root process used in halt()
+    protected Lock cntLock = new Lock();//counter lock
+    protected OpenFile[] descriptors;
+
+	
+	protected UserProcess parentProcess;
+	protected LinkedList<UserProcess> childrenProcess; 
+	protected Lock statusLock;
+	protected UThread thread;
+	protected HashMap<Integer,Integer> childrenExitStatus;
+
+	
+	
 }
