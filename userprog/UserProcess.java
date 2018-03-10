@@ -450,16 +450,12 @@ public class UserProcess {
 		
 		//wake up any threads waiting for join
 		joinSemaphore.V();
-		
-		System.out.println("release all semaphore");
-	    // Done 
-		if(PID==0){
-			Kernel.kernel.terminate();
-		}else{
-			UThread.finish();
-		}
-		return 0;
-
+	        // Done 
+	    if (PID==0) {
+	        Machine.halt();
+	    }
+	    KThread.finish();
+	    return exit;
     }
 
     private int handleJoin(int pid) {
@@ -591,11 +587,7 @@ public class UserProcess {
 	        return number;
 	        
 
-	 }
-	 
-	 
-	 
-	 
+	    }
 	 private int handleWrite (int fd, int buffer, int count){
 		 if(fd<0||fd>15||descriptors[fd]==null) {
 	            Lib.debug(dbgProcess, "handleWrite:Descriptor out of range");
@@ -624,7 +616,7 @@ public class UserProcess {
 	            //file.position = file.position+number;
 	     return number;
 	        
-	 }
+	    }
 	 
 	 
 	 private int handleClose(int fDescriptor) {
