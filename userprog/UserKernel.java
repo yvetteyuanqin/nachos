@@ -105,7 +105,7 @@ public class UserKernel extends ThreadedKernel {
 		String shellProgram = Machine.getShellProgramName();
 		Lib.assertTrue(process.execute(shellProgram, new String[] {}));
 
-		KThread.currentThread().finish();
+		KThread.finish();
 	}
 
 	/**
@@ -122,5 +122,8 @@ public class UserKernel extends ThreadedKernel {
 	private static Coff dummy1 = null;
 
   public static Lock freePagesLock;
+  public static Lock processIDLock;
   public static LinkedList<Integer> freePages = new LinkedList<Integer>();
+  
+  public static int newProcessID = 0;
 }
