@@ -30,10 +30,10 @@ public class UserProcess {
 	public UserProcess() {
 		int numPhysPages = Machine.processor().getNumPhysPages();
 		
-	//	UserKernel.processIDLock.acquire();
+		cntLock.acquire();
 		PID = UserKernel.newProcessID;
 		UserKernel.newProcessID++;
-//		UserKernel.processIDLock.release();
+		cntLock.release();
 		
 		pageTable = new TranslationEntry[numPhysPages];
 		for (int i = 0; i < numPhysPages; i++)
@@ -814,7 +814,7 @@ public class UserProcess {
     protected OpenFile[] descriptors;
 
 	protected LinkedList<UserProcess> childrenProcess = new LinkedList<UserProcess>(); 
-	protected Lock statusLock;
+	protected Lock statusLock = new Lock();
 
 	protected int exitStatus;
 
