@@ -452,9 +452,11 @@ public class UserProcess {
 		joinSemaphore.V();
 	        // Done 
 	    if (PID==0) {
-	        Machine.halt();
+	    	UserKernel.kernel.terminate();//
 	    }
-	    KThread.finish();
+	    
+	    KThread.currentThread().finish();
+	    
 	    return exit;
     }
 
