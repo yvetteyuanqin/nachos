@@ -455,7 +455,7 @@ public class UserProcess {
 	    	UserKernel.kernel.terminate();//
 	    }
 	    
-	    UThread.finish();
+	    KThread.currentThread().finish();
 	    
 	    return exit;
     }
