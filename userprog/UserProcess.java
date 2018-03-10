@@ -339,9 +339,9 @@ public class UserProcess {
 			for (int i = 0; i < section.getLength(); i++) {
 				int vpn = section.getFirstVPN() + i;
 				TranslationEntry entry = pageTable[vpn];
-			    UserKernel.freePagesLock.acquire();
+			    UserKernel.freePagesSem.P();
 			    int freePageNum = UserKernel.freePages.removeFirst();
-		     	UserKernel.freePagesLock.release();
+		     	UserKernel.freePagesSem.V();;
 			    entry.ppn = freePageNum;
 			    entry.valid = true;
 			    entry.readOnly = section.isReadOnly();
@@ -361,9 +361,9 @@ public class UserProcess {
 			
 			//put the release resources to freePages.
 			if(entry.valid) {
-				UserKernel.freePagesLock.acquire();
+				UserKernel.freePagesSem.P();;
 				UserKernel.freePages.add(entry.ppn);
-				UserKernel.freePagesLock.release();
+				UserKernel.freePagesSem.V();
 			}
 	
 		}
