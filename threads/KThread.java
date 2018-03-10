@@ -453,15 +453,15 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		long ticks;
-		Alarm test = new Alarm();
-		for (int i =0;i<5;i++)
-		{
-			ticks=(long)(Math.random()*1000000);
-			System.out.println("I'm about to wait for " + ticks + " ticks.");
-			test.waitUntil(ticks);
-			System.out.println(ticks + " ticks later, I'm done waiting!");
-		}
+		//long ticks;
+	//	Alarm test = new Alarm();
+		//for (int i =0;i<5;i++)
+		//{
+		//	ticks=(long)(Math.random()*1000000);
+		//	System.out.println("I'm about to wait for " + ticks + " ticks.");
+	//		test.waitUntil(ticks);
+		//	System.out.println(ticks + " ticks later, I'm done waiting!");
+		//}
 	}
 
 	private static final char dbgThread = 't';
