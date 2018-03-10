@@ -567,7 +567,7 @@ public class UserProcess {
 	            Lib.debug(dbgProcess, "handleRead:Size to read cannot be negative");
 	            return -1;
 	        }
-	        OpenFile file=descriptors[fDescriptor];;//or OpenFile file
+	        OpenFile file=descriptors[fDescriptor];//or OpenFile file
 	        if (file == null) return -1;
 //	        if(descriptors[fDescriptor] != null) {
 //	            file = descriptors[fDescriptor];
@@ -646,8 +646,22 @@ public class UserProcess {
 	        Lib.debug(dbgProcess, "filename: "+fileName);
 	        if(fileName == null) {
 	            Lib.debug(dbgProcess, "handleUnlink:Read filename failed ");
-	            return 0;
+	            return -1;
 	        }
+	        OpenFile file;
+			int index=-1;
+			for(int i=0;i<16;i++){
+				file=descriptors[i];
+				if(file!=null&&file.getName().compareTo(fileName)==0){
+					index=i;
+					break;
+				}
+			}
+			if(index!=-1){
+				Lib.debug(dbgProcess, "handleUnlink:File should be closed first");
+				return -1;
+			}
+	        
 	        boolean isRemoved = ThreadedKernel.fileSystem.remove(fileName);
 	        if(!isRemoved)
 	        {
@@ -810,7 +824,7 @@ public class UserProcess {
 	/*self-defined and used*/
     protected static int counter = 0;
     protected int PID;//process number to identify root process used in halt()
-    protected Lock cntLock = new Lock();//counter lock
+
     protected OpenFile[] descriptors;
 
 	protected LinkedList<UserProcess> childrenProcess = new LinkedList<UserProcess>(); 
