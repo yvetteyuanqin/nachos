@@ -453,9 +453,8 @@ public class UserProcess {
 	        // Done 
 	    if (PID==0) {
 	        Machine.halt();
-	        Kernel.kernel.terminate();
 	    }
-	    UThread.finish();
+	    KThread.finish();
 	    return exit;
     }
 
