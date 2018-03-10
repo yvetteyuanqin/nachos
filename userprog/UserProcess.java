@@ -449,7 +449,7 @@ public class UserProcess {
 		exitStatus = exit;
 		
 		//wake up any threads waiting for join
-		statusLock.release();
+		joinSemaphore.V();
 	        // Done 
 	    if (PID==0) {
 	        Machine.halt();
@@ -462,7 +462,7 @@ public class UserProcess {
         // if the pid is in the childProcess, acquire its lock
         for (UserProcess child : childrenProcess) {
 		    if (child.PID == pid) {
-		    	child.statusLock.acquire();
+		    	child.joinSemaphore.P();
 		    	return child.exitStatus;
 		    }
         }
@@ -814,7 +814,7 @@ public class UserProcess {
     protected OpenFile[] descriptors;
 
 	protected LinkedList<UserProcess> childrenProcess = new LinkedList<UserProcess>(); 
-	protected Lock statusLock = new Lock();
+	protected static Semaphore joinSemaphore = new Semaphore(0);
 
 	protected int exitStatus;
 
