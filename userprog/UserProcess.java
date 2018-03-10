@@ -283,9 +283,9 @@ public class UserProcess {
 		// gey the free page num
 		for(int i = sectionLength; i <= stackPages + sectionLength; i++) {
 			TranslationEntry entry = pageTable[i];
-			UserKernel.freePagesLock.acquire();
+			UserKernel.freePagesSem.P();
 			int freePageNum = UserKernel.freePages.removeFirst();
-			UserKernel.freePagesLock.release();
+			UserKernel.freePagesSem.V();
 			entry.ppn = freePageNum;
 			entry.valid = true;
 		}
