@@ -413,31 +413,57 @@ public class UserProcess {
 		return 0;
 	}
 
-    private int handleExec(int name, int argc, int argv) {
-        String[] args = new String[argc];
-
-        //Each argv is 4byte
-        for (int i=0; i<argc; i++) {
-            byte[] argPoint = new byte[4];
-            readVirtualMemory(argv+i*4, argPoint);
-            
-            // read string argument at pointer from above
-            args[i] = readVirtualMemoryString(Lib.bytesToInt(argPoint,0), 256);
-        }
-        
-        UserProcess child = new UserProcess();
-        childrenProcess.add(child);
-        String processName = readVirtualMemoryString(name,256);
-        boolean successExec = child.execute(processName, args);
-        if(!successExec) return -1;
-        return child.PID;
+    private int handleExec(int name, int argc, int addr) {
+//        String[] args = new String[argc];
+//
+//        //Each argv is 4byte
+//        for (int i=0; i<argc; i++) {
+//            byte[] argPoint = new byte[4];
+//            readVirtualMemory(argv+i*4, argPoint);
+//            
+//            // read string argument at pointer from above
+//            args[i] = readVirtualMemoryString(Lib.bytesToInt(argPoint,0), 256);
+//        }
+//        
+//        UserProcess child = new UserProcess();
+//        childrenProcess.add(child);
+//        String processName = readVirtualMemoryString(name,256);
+//        boolean successExec = child.execute(processName, args);
+//        if(!successExec) return -1;
+//        return child.PID;
+    	String fileName = readVirtualMemoryString(name,256);
+    	if(fileName ==null||argc<0||addr>numPages*pageSize) {
+    		return -1;
+    	}
+    	String[] args = new String[argc];
+    	if(!fileName.substring(fileName.length()-4, fileName.length()).equals("coff"))
+    		return -1;
+    	for(int i = 0;i<argc;i++) {
+    		byte[] readIn = new byte[4];
+    		int length = readVirtualMemory(name+i*4,readIn);
+    		if(length!=4)
+    			return -1;
+    		int address = Lib.bytesToInt(readIn,0);
+    		String arg = readVirtualMemoryString(address,256);
+    		if(arg ==null)
+    			return -1;
+    		args[i]=arg;
+    	}
+    	UserProcess newproc = UserProcess.newUserProcess();
+    	if(!newproc.execute(fileName, args))
+    		return -1;
+    	newproc.ParentProcess = this;
+    	this.childrenProcess.add(newproc);
+    	return newproc.PID;
+    		
+    	
     }	
 	
 	
     private int handleExit(int exit) {
     	//release the resources
     	
-        unloadSections();
+
         
         //clear the file table
 		for (int i = 2; i < descriptors.length; i++) {
@@ -452,7 +478,11 @@ public class UserProcess {
 		normalExit = true;
 		
 		//wake up any threads waiting for join
-		joinSemaphore.V();
+		if(ParentProcess!=null) {
+			joinSemaphore.V();
+			ParentProcess.childrenProcess.remove(this);
+		}
+        unloadSections();		
 	        // Done 
 	    if (PID==0) {
 	    	UserKernel.kernel.terminate();//
@@ -859,6 +889,7 @@ public class UserProcess {
 
 	protected int exitStatus;
     private boolean normalExit;
+    private UserProcess ParentProcess;
 	
 	
 }
