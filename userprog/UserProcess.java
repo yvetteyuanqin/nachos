@@ -440,7 +440,7 @@ public class UserProcess {
     		return -1;
     	for(int i = 0;i<argc;i++) {
     		byte[] readIn = new byte[4];
-    		int length = readVirtualMemory(name+i*4,readIn);
+    		int length = readVirtualMemory(addr+i*4,readIn);
     		if(length!=4)
     			return -1;
     		int address = Lib.bytesToInt(readIn,0);
