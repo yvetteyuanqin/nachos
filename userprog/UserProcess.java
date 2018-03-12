@@ -436,26 +436,29 @@ public class UserProcess {
 	
     private int handleExit(int exit) {
     	//release the resources
+    	
         unloadSections();
         
         //clear the file table
 		for (int i = 2; i < descriptors.length; i++) {
 		    if (descriptors[i] != null) {
 			descriptors[i].close();
+			descriptors[i] =null;
 		    }
 		}
 		
 		
-		exitStatus = exit;
+		this.exitStatus = exit;
+		normalExit = true;
 		
 		//wake up any threads waiting for join
 		joinSemaphore.V();
 	        // Done 
 	    if (PID==0) {
 	    	UserKernel.kernel.terminate();//
-	    }
-	    
-	    KThread.currentThread().finish();
+	    }else	{
+	    	KThread.currentThread().finish();
+	    	}
 	    
 	    return exit;
     }
@@ -488,7 +491,7 @@ public class UserProcess {
     	byte[] childstatus = new byte[4];
     	childstatus=Lib.bytesFromInt(child.exitStatus);
     	int numWriteByte = writeVirtualMemory (addr,childstatus);
-    	if(child.exitStatus == 1 && numWriteByte == 4)
+    	if(child.normalExit && numWriteByte == 4)
     		return 1;
     	return 0;
     }
@@ -855,7 +858,7 @@ public class UserProcess {
 	protected static Semaphore joinSemaphore = new Semaphore(0);
 
 	protected int exitStatus;
-
+    private boolean normalExit;
 	
 	
 }
