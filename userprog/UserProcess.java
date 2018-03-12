@@ -490,7 +490,7 @@ public class UserProcess {
 	    	KThread.currentThread().finish();
 	    	}
 	    
-	    return exit;
+	    return exitStatus;
     }
 
     private int handleJoin(int pid, int addr) {
