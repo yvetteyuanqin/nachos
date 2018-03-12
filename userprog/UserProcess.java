@@ -460,13 +460,13 @@ public class UserProcess {
     }	
 	
 	
-    private int handleExit(int exit) {
+    private int handleExit(int exitStatus) {
     	//release the resources
     	
 
         
         //clear the file table
-		for (int i = 2; i < descriptors.length; i++) {
+		for (int i = 0; i < descriptors.length; i++) {
 		    if (descriptors[i] != null) {
 			descriptors[i].close();
 			descriptors[i] =null;
@@ -474,7 +474,7 @@ public class UserProcess {
 		}
 		
 		
-		this.exitStatus = exit;
+		this.status = exitStatus;
 		normalExit = true;
 		
 		//wake up any threads waiting for join
@@ -519,7 +519,7 @@ public class UserProcess {
     	}
     	child.joinSemaphore.P();
     	byte[] childstatus = new byte[4];
-    	childstatus=Lib.bytesFromInt(child.exitStatus);
+    	childstatus=Lib.bytesFromInt(child.status);
     	int numWriteByte = writeVirtualMemory (addr,childstatus);
     	if(child.normalExit && numWriteByte == 4)
     		return 1;
@@ -887,7 +887,7 @@ public class UserProcess {
 	protected LinkedList<UserProcess> childrenProcess = new LinkedList<UserProcess>(); 
 	protected static Semaphore joinSemaphore = new Semaphore(0);
 
-	protected int exitStatus;
+	protected int status;
     private boolean normalExit;
     private UserProcess ParentProcess;
 	
