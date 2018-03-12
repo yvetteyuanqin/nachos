@@ -522,8 +522,8 @@ public class UserProcess {
     	childstatus=Lib.bytesFromInt(child.status);
     	int numWriteByte = writeVirtualMemory (addr,childstatus);
     	if(child.normalExit && numWriteByte == 4)
-    		return 0;
-    	return 1;
+    		return 1;
+    	return 0;
     }
 
 	
