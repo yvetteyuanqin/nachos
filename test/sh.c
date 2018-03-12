@@ -174,10 +174,10 @@ void runline(char* line) {
 	    case -1:
 		printf("join: Invalid process ID.\n");
 		break;
-	    case 1:
+	    case 0:
 		printf("\n[%d] Unhandled exception\n", pid);
 		break;
-	    case 0:
+	    case 1:
 		printf("\n[%d] Done (%d)\n", pid, status);
 		break;
 	    }

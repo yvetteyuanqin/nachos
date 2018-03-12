@@ -460,15 +460,37 @@ public class UserProcess {
 	    return exit;
     }
 
-    private int handleJoin(int pid) {
+    private int handleJoin(int pid, int addr) {
         // if the pid is in the childProcess, acquire its lock
-        for (UserProcess child : childrenProcess) {
-		    if (child.PID == pid) {
-		    	child.joinSemaphore.P();
-		    	return child.exitStatus;
-		    }
-        }
-        return -1;
+//        for (UserProcess child : childrenProcess) {
+//		    if (child.PID == pid) {
+//		    	child.joinSemaphore.P();
+//		    	return child.exitStatus;
+//		    }
+//        }
+//        return -1;
+    	if(pid<0||addr<0) {
+    		return -1;
+    	}
+    	UserProcess child = null;
+    	int childrenNum = childrenProcess.size();
+    	for(int i = 0;i<childrenNum;i++) {
+    		if(childrenProcess.get(i).PID == pid) {
+    			child = childrenProcess.get(i);
+    			break;
+    		}
+    	}
+    	if(child==null) {
+    		Lib.debug(dbgProcess, "handleJoin:pID is not the child");
+			return -1;
+    	}
+    	child.joinSemaphore.P();
+    	byte[] childstatus = new byte[4];
+    	childstatus=Lib.bytesFromInt(child.exitStatus);
+    	int numWriteByte = writeVirtualMemory (addr,childstatus);
+    	if(child.exitStatus == 1 && numWriteByte == 4)
+    		return 1;
+    	return 0;
     }
 
 	
@@ -753,7 +775,7 @@ public class UserProcess {
 		    case syscallExit:
 		            return handleExit(a0);
 		    case syscallJoin: 
-		            return handleJoin(a0);
+		            return handleJoin(a0,a1);
 			case syscallCreate:
 		    	    return handleCreate(a0);
 		    case syscallOpen:
